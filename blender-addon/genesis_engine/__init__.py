@@ -43,8 +43,15 @@ class GENESIS_OT_generate(bpy.types.Operator):
         try:
             with request.urlopen(server_request, timeout=10) as response:
                 data = json.loads(response.read().decode("utf-8"))
-        except error.URLError:
-            self.report({"ERROR"}, "Genesis server is not running.")
+        except error.HTTPError as exc:
+            error_body = exc.read().decode("utf-8", errors="replace")
+            print(f"Genesis HTTP error {exc.code}: {error_body}")
+            self.report({"ERROR"}, f"Server returned HTTP {exc.code}. Check console.")
+            return {"CANCELLED"}
+
+        except error.URLError as exc:
+            print(f"Genesis connection error: {exc}")
+            self.report({"ERROR"}, "Could not connect to Genesis server.")
             return {"CANCELLED"}
         except Exception as exc:
             self.report({"ERROR"}, f"Server error: {exc}")
