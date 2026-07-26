@@ -2,8 +2,36 @@ import numpy as np
 import trimesh
 
 
-def create_sword(scale: float = 1.0) -> trimesh.Scene:
+def create_sword(
+    scale: float = 1.0,
+    material: str = "iron",
+) -> trimesh.Scene:
     """Create a recognizable low-poly game sword."""
+    material_colors = {
+        "wood": {
+            "blade": [125, 78, 38, 255],
+            "guard": [95, 58, 30, 255],
+            "handle": [70, 42, 22, 255],
+            "pommel": [95, 58, 30, 255],
+        },
+        "iron": {
+            "blade": [175, 185, 195, 255],
+            "guard": [105, 110, 120, 255],
+            "handle": [82, 48, 25, 255],
+            "pommel": [105, 110, 120, 255],
+        },
+        "gold": {
+            "blade": [212, 170, 45, 255],
+            "guard": [235, 195, 65, 255],
+            "handle": [92, 48, 24, 255],
+            "pommel": [235, 195, 65, 255],
+        },
+    }
+
+    colors = material_colors.get(
+        material,
+        material_colors["iron"],
+    )
 
     blade_vertices = np.array([
         [-0.16, -0.05, 0.00],
@@ -37,13 +65,13 @@ def create_sword(scale: float = 1.0) -> trimesh.Scene:
         faces=blade_faces,
         process=True,
     )
-    blade.visual.face_colors = [175, 185, 195, 255]
+    blade.visual.face_colors = colors["blade"]
     blade.apply_translation((0, 0, 0.55))
 
     guard = trimesh.creation.box(
         extents=(1.25, 0.18, 0.18),
     )
-    guard.visual.face_colors = [105, 72, 38, 255]
+    guard.visual.face_colors = colors["guard"]
     guard.apply_translation((0, 0, 0.48))
 
     handle = trimesh.creation.cylinder(
@@ -51,14 +79,14 @@ def create_sword(scale: float = 1.0) -> trimesh.Scene:
         height=0.85,
         sections=12,
     )
-    handle.visual.face_colors = [82, 48, 25, 255]
+    handle.visual.face_colors = colors["handle"]
     handle.apply_translation((0, 0, 0.00))
 
     pommel = trimesh.creation.icosphere(
         subdivisions=1,
         radius=0.20,
     )
-    pommel.visual.face_colors = [105, 72, 38, 255]
+    pommel.visual.face_colors = colors["pommel"]
     pommel.apply_translation((0, 0, -0.48))
 
     scene = trimesh.Scene()

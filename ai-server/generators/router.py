@@ -23,12 +23,28 @@ def detect_scale(prompt: str) -> float:
 
     return 1.0
 
+def detect_material(prompt: str) -> str:
+    """Detect a basic material word in the prompt."""
+
+    prompt_lower = prompt.lower()
+
+    if any(word in prompt_lower for word in ("gold", "golden")):
+        return "gold"
+
+    if any(word in prompt_lower for word in ("wood", "wooden")):
+        return "wood"
+
+    if any(word in prompt_lower for word in ("iron", "steel", "metal")):
+        return "iron"
+
+    return "iron"
 
 def route_prompt(prompt: str) -> trimesh.Scene:
     """Choose a generator and apply prompt attributes."""
 
     prompt_lower = prompt.lower().strip()
     scale = detect_scale(prompt_lower)
+    material = detect_material(prompt_lower)
 
     weapon_words = (
         "sword",
@@ -42,7 +58,10 @@ def route_prompt(prompt: str) -> trimesh.Scene:
     )
 
     if any(word in prompt_lower for word in weapon_words):
-        return create_sword(scale=scale)
+        return create_sword(
+        scale=scale,
+        material=material,
+        )
 
     if any(word in prompt_lower for word in nature_words):
         return create_tree(scale=scale)
