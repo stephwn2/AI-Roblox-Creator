@@ -33,7 +33,7 @@ OBJECT_SYNONYMS = {
 
 
 def detect_scale(prompt: str) -> float:
-    """Read size words from a prompt and return a scale multiplier."""
+    """Read a size word and return a scale multiplier."""
 
     prompt_lower = prompt.lower()
 
@@ -53,7 +53,7 @@ def detect_scale(prompt: str) -> float:
 
 
 def detect_material(prompt: str) -> str:
-    """Detect a basic material word in the prompt."""
+    """Detect a basic material word."""
 
     prompt_lower = prompt.lower()
 
@@ -69,29 +69,31 @@ def detect_material(prompt: str) -> str:
     return "iron"
 
 
-def detect_object_type(prompt: str) -> str:
-    """Determine which supported object the prompt describes."""
+def detect_object_types(prompt: str) -> list[str]:
+    """Find every supported object mentioned in the prompt."""
 
     prompt_lower = prompt.lower()
+    detected_objects: list[str] = []
 
     for object_type, words in OBJECT_SYNONYMS.items():
         if any(word in prompt_lower for word in words):
-            return object_type
+            detected_objects.append(object_type)
 
-    raise ValueError(
-        "Genesis does not recognize that object yet. "
-        "Try a sword, tree, cube, or sphere."
-    )
+    if not detected_objects:
+        raise ValueError(
+            "Genesis does not recognize any supported objects. "
+            "Try sword, tree, cube, or sphere."
+        )
+
+    return detected_objects
 
 
-def route_prompt(prompt: str) -> trimesh.Scene:
-    """Choose a generator and apply prompt attributes."""
-
-    prompt_lower = prompt.lower().strip()
-
-    scale = detect_scale(prompt_lower)
-    material = detect_material(prompt_lower)
-    object_type = detect_object_type(prompt_lower)
+def create_object_scene(
+    object_type: str,
+    scale: float,
+    material: str,
+) -> trimesh.Scene:
+    """Generate one object scene."""
 
     if object_type == "sword":
         return create_sword(
@@ -115,4 +117,49 @@ def route_prompt(prompt: str) -> trimesh.Scene:
         )
         return trimesh.Scene(sphere)
 
-    raise ValueError("Unsupported object type.")
+    raise ValueError(f"Unsupported object type: {object_type}")
+
+
+def route_prompt(prompt: str) -> trimesh.Scene:
+    """Generate every supported object mentioned in the prompt."""
+
+    prompt_lower = prompt.lower().strip()
+
+    scale = detect_scale(prompt_lower)
+    material = detect_material(prompt_lower)
+    object_types = detect_object_types(prompt_lower)
+
+    combined_scene = trimesh.Scene()
+    spacing = 5.0
+
+    for object_index, object_type in enumerate(object_types):
+        object_scene = create_object_scene(
+            object_type=object_type,
+            scale=scale,
+            material=material,
+        )
+
+        centered_index = object_index - ((len(object_types) - 1) / 2)
+        x_offset = centered_index * spacing
+
+        for geometry_index, geometry in enumerate(
+            object_scene.geometry.values()
+        ):
+            geometry_copy = geometry.copy()
+            geometry_copy.apply_translation(
+                (x_offset, 0.0, 0.0)
+            )
+
+            unique_name = (
+                f"{object_type}_"
+                f"{object_index}_"
+                f"{geometry_index}"
+            )
+
+            combined_scene.add_geometry(
+                geometry_copy,
+                node_name=unique_name,
+                geom_name=unique_name,
+            )
+
+    return combined_scene
