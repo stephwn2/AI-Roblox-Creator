@@ -1,165 +1,87 @@
 import trimesh
 
 from generators.nature_generator import create_tree
+from generators.prompt_parser import AssetRequest, parse_prompt
 from generators.weapon_generator import create_sword
 
 
-OBJECT_SYNONYMS = {
-    "sword": (
-        "sword",
-        "blade",
-        "longsword",
-        "broadsword",
-        "weapon",
-    ),
-    "tree": (
-        "tree",
-        "pine",
-        "oak",
-        "sapling",
-    ),
-    "cube": (
-        "cube",
-        "box",
-        "block",
-    ),
-    "sphere": (
-        "sphere",
-        "ball",
-        "orb",
-        "globe",
-    ),
-}
+def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
+    """Generate one object using its parsed instructions."""
 
-
-def detect_scale(prompt: str) -> float:
-    """Read a size word and return a scale multiplier."""
-
-    prompt_lower = prompt.lower()
-
-    if "tiny" in prompt_lower:
-        return 0.4
-
-    if "small" in prompt_lower:
-        return 0.65
-
-    if "giant" in prompt_lower or "huge" in prompt_lower:
-        return 2.0
-
-    if "large" in prompt_lower or "big" in prompt_lower:
-        return 1.5
-
-    return 1.0
-
-
-def detect_material(prompt: str) -> str:
-    """Detect a basic material word."""
-
-    prompt_lower = prompt.lower()
-
-    if any(word in prompt_lower for word in ("gold", "golden")):
-        return "gold"
-
-    if any(word in prompt_lower for word in ("wood", "wooden")):
-        return "wood"
-
-    if any(word in prompt_lower for word in ("iron", "steel", "metal")):
-        return "iron"
-
-    return "iron"
-
-
-def detect_object_types(prompt: str) -> list[str]:
-    """Find every supported object mentioned in the prompt."""
-
-    prompt_lower = prompt.lower()
-    detected_objects: list[str] = []
-
-    for object_type, words in OBJECT_SYNONYMS.items():
-        if any(word in prompt_lower for word in words):
-            detected_objects.append(object_type)
-
-    if not detected_objects:
-        raise ValueError(
-            "Genesis does not recognize any supported objects. "
-            "Try sword, tree, cube, or sphere."
-        )
-
-    return detected_objects
-
-
-def create_object_scene(
-    object_type: str,
-    scale: float,
-    material: str,
-) -> trimesh.Scene:
-    """Generate one object scene."""
-
-    if object_type == "sword":
+    if asset.object_type == "sword":
         return create_sword(
-            scale=scale,
-            material=material,
+            scale=asset.scale,
+            material=asset.material,
         )
 
-    if object_type == "tree":
-        return create_tree(scale=scale)
+    if asset.object_type == "tree":
+        return create_tree(scale=asset.scale)
 
-    if object_type == "cube":
+    if asset.object_type == "cube":
         cube = trimesh.creation.box(
-            extents=(2 * scale, 2 * scale, 2 * scale),
+            extents=(
+                2 * asset.scale,
+                2 * asset.scale,
+                2 * asset.scale,
+            ),
         )
         return trimesh.Scene(cube)
 
-    if object_type == "sphere":
+    if asset.object_type == "sphere":
         sphere = trimesh.creation.icosphere(
             subdivisions=3,
-            radius=1.2 * scale,
+            radius=1.2 * asset.scale,
         )
         return trimesh.Scene(sphere)
 
-    raise ValueError(f"Unsupported object type: {object_type}")
+    raise ValueError(
+        f"Unsupported object type: {asset.object_type}"
+    )
 
 
 def route_prompt(prompt: str) -> trimesh.Scene:
-    """Generate every supported object mentioned in the prompt."""
+    """Parse the prompt and generate every requested object."""
 
-    prompt_lower = prompt.lower().strip()
-
-    scale = detect_scale(prompt_lower)
-    material = detect_material(prompt_lower)
-    object_types = detect_object_types(prompt_lower)
+    asset_requests = parse_prompt(prompt)
 
     combined_scene = trimesh.Scene()
-    spacing = 5.0
+    x_cursor = 0.0
+    gap = 2.0
 
-    for object_index, object_type in enumerate(object_types):
-        object_scene = create_object_scene(
-            object_type=object_type,
-            scale=scale,
-            material=material,
-        )
+    object_number = 0
 
-        centered_index = object_index - ((len(object_types) - 1) / 2)
-        x_offset = centered_index * spacing
+    for asset in asset_requests:
+        for copy_index in range(asset.quantity):
+            object_scene = create_object_scene(asset)
 
-        for geometry_index, geometry in enumerate(
-            object_scene.geometry.values()
-        ):
-            geometry_copy = geometry.copy()
-            geometry_copy.apply_translation(
-                (x_offset, 0.0, 0.0)
-            )
+            bounds = object_scene.bounds
+            minimum_x = float(bounds[0][0])
+            maximum_x = float(bounds[1][0])
+            object_width = maximum_x - minimum_x
 
-            unique_name = (
-                f"{object_type}_"
-                f"{object_index}_"
-                f"{geometry_index}"
-            )
+            x_offset = x_cursor - minimum_x
 
-            combined_scene.add_geometry(
-                geometry_copy,
-                node_name=unique_name,
-                geom_name=unique_name,
-            )
+            for geometry_index, geometry in enumerate(
+                object_scene.geometry.values()
+            ):
+                geometry_copy = geometry.copy()
+                geometry_copy.apply_translation(
+                    (x_offset, 0.0, 0.0)
+                )
+
+                unique_name = (
+                    f"{asset.object_type}_"
+                    f"{object_number}_"
+                    f"{geometry_index}"
+                )
+
+                combined_scene.add_geometry(
+                    geometry_copy,
+                    node_name=unique_name,
+                    geom_name=unique_name,
+                )
+
+            x_cursor += object_width + gap
+            object_number += 1
 
     return combined_scene

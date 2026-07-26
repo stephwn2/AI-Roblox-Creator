@@ -41,7 +41,7 @@ class GENESIS_OT_generate(bpy.types.Operator):
         )
 
         try:
-            with request.urlopen(server_request, timeout=10) as response:
+            with request.urlopen(server_request, timeout=60) as response:
                 data = json.loads(response.read().decode("utf-8"))
         except error.HTTPError as exc:
             error_body = exc.read().decode("utf-8", errors="replace")
