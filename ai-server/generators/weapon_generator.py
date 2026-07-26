@@ -1,10 +1,11 @@
 import numpy as np
 import trimesh
-
+import random
 
 def create_sword(
     scale: float = 1.0,
     material: str = "iron",
+    variation: bool = True,
 ) -> trimesh.Scene:
     """Create a recognizable low-poly game sword."""
     material_colors = {
@@ -33,59 +34,75 @@ def create_sword(
         material_colors["iron"],
     )
 
+    if variation:
+            blade_length_multiplier = random.uniform(0.85, 1.20)
+            blade_width_multiplier = random.uniform(0.85, 1.15)
+            guard_width_multiplier = random.uniform(0.80, 1.25)
+            handle_length_multiplier = random.uniform(0.85, 1.15)
+            pommel_size_multiplier = random.uniform(0.80, 1.20)
+    else:
+            blade_length_multiplier = 1.0
+            blade_width_multiplier = 1.0
+            guard_width_multiplier = 1.0
+            handle_length_multiplier = 1.0
+            pommel_size_multiplier = 1.0
+
     blade_vertices = np.array([
-        [-0.16, -0.05, 0.00],
-        [0.16, -0.05, 0.00],
-        [-0.16, 0.05, 0.00],
-        [0.16, 0.05, 0.00],
+            [-0.16 * blade_width_multiplier, -0.05, 0.00],
+            [ 0.16 * blade_width_multiplier, -0.05, 0.00],
+            [-0.16 * blade_width_multiplier,  0.05, 0.00],
+            [ 0.16 * blade_width_multiplier,  0.05, 0.00],
 
-        [-0.10, -0.04, 2.35],
-        [0.10, -0.04, 2.35],
-        [-0.10, 0.04, 2.35],
-        [0.10, 0.04, 2.35],
+            [-0.10 * blade_width_multiplier, -0.04, 2.35 * blade_length_multiplier],
+            [ 0.10 * blade_width_multiplier, -0.04, 2.35 * blade_length_multiplier],
+            [-0.10 * blade_width_multiplier,  0.04, 2.35 * blade_length_multiplier],
+            [ 0.10 * blade_width_multiplier,  0.04, 2.35 * blade_length_multiplier],
 
-        [0.00, -0.03, 2.75],
-        [0.00, 0.03, 2.75],
-    ])
-
+            [0.00, -0.03, 2.75 * blade_length_multiplier],
+            [0.00,  0.03, 2.75 * blade_length_multiplier],
+        ])
     blade_faces = np.array([
-        [0, 1, 3], [0, 3, 2],
-        [0, 4, 5], [0, 5, 1],
-        [2, 3, 7], [2, 7, 6],
-        [0, 2, 6], [0, 6, 4],
-        [1, 5, 7], [1, 7, 3],
-        [4, 6, 9], [4, 9, 8],
-        [5, 8, 9], [5, 9, 7],
-        [4, 8, 5],
-        [6, 7, 9],
-    ])
+            [0, 1, 3], [0, 3, 2],
+            [0, 4, 5], [0, 5, 1],
+            [2, 3, 7], [2, 7, 6],
+            [0, 2, 6], [0, 6, 4],
+            [1, 5, 7], [1, 7, 3],
+            [4, 6, 9], [4, 9, 8],
+            [5, 8, 9], [5, 9, 7],
+            [4, 8, 5],
+            [6, 7, 9],
+        ])
 
     blade = trimesh.Trimesh(
-        vertices=blade_vertices,
-        faces=blade_faces,
-        process=True,
-    )
+            vertices=blade_vertices,
+            faces=blade_faces,
+            process=True,
+        )
     blade.visual.face_colors = colors["blade"]
     blade.apply_translation((0, 0, 0.55))
 
     guard = trimesh.creation.box(
-        extents=(1.25, 0.18, 0.18),
-    )
+            extents=(
+                1.25 * guard_width_multiplier,
+                0.18,
+                0.18,
+            ),
+        )
     guard.visual.face_colors = colors["guard"]
     guard.apply_translation((0, 0, 0.48))
 
     handle = trimesh.creation.cylinder(
-        radius=0.13,
-        height=0.85,
-        sections=12,
-    )
+            radius=0.13,
+            height=0.85 * handle_length_multiplier,
+            sections=12,
+        )
     handle.visual.face_colors = colors["handle"]
     handle.apply_translation((0, 0, 0.00))
 
     pommel = trimesh.creation.icosphere(
-        subdivisions=1,
-        radius=0.20,
-    )
+            subdivisions=1,
+            radius=0.20 * pommel_size_multiplier,
+        )
     pommel.visual.face_colors = colors["pommel"]
     pommel.apply_translation((0, 0, -0.48))
 
@@ -96,5 +113,8 @@ def create_sword(
     scene.add_geometry(pommel, node_name="Pommel")
 
     for geometry in scene.geometry.values():
-        geometry.apply_scale(scale)
+            geometry.apply_scale(scale)
+
+
+
     return scene
