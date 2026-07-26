@@ -135,8 +135,10 @@ def create_sword(
     style: str = "sword",
     blade_length: float = 1.0,
     blade_width: float = 1.0,
+    guard_width: float = 1.0,
+    handle_length: float = 1.0,
     condition: str = "clean",
-) -> trimesh.Scene:
+):
     """Create a recognizable low-poly game sword."""
 
     material_colors = {
@@ -192,10 +194,20 @@ def create_sword(
         pommel_size_multiplier = 1.0
 
     blade_length_multiplier = (
+                style_settings["blade_length"]
+                * variation_blade_length
+                * blade_length
+    )
+
+    if condition == "broken":
+            blade_length_multiplier = (
         style_settings["blade_length"]
         * variation_blade_length
         * blade_length
     )
+
+    if condition == "broken":
+        blade_length_multiplier *= 0.55
 
     blade_width_multiplier = (
         style_settings["blade_width"]
@@ -206,17 +218,19 @@ def create_sword(
     guard_width_multiplier = (
         style_settings["guard_width"]
         * variation_guard_width
+        * guard_width
     )
 
     handle_length_multiplier = (
         style_settings["handle_length"]
         * variation_handle_length
+        * handle_length
     )
 
     blade = create_blade(
-        length_multiplier=blade_length_multiplier,
-        width_multiplier=blade_width_multiplier,
-        color=colors["blade"],
+            length_multiplier=blade_length_multiplier,
+            width_multiplier=blade_width_multiplier,
+            color=colors["blade"],
     )
 
     guard = create_guard(
