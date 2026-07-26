@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from generators.router import route_prompt
 
+import traceback
 
 app = FastAPI(title="Genesis AI Server")
 
@@ -43,11 +44,12 @@ def generate_model(request: GenerateRequest):
 
     try:
         scene = route_prompt(prompt)
-    except ValueError as exc:
+    except Exception as exc:
+        traceback.print_exc()
         raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
+        status_code=400,
+        detail=str(exc),
+    ) from exc
 
     safe_name = "".join(
         character if character.isalnum() else "_"

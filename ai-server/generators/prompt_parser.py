@@ -14,6 +14,10 @@ OBJECT_SYNONYMS = {
         "broadswords",
         "weapon",
         "weapons",
+        "dagger",
+        "daggers",
+        "greatsword",
+        "greatswords",
     ),
     "tree": (
         "tree",
@@ -52,12 +56,15 @@ class AssetRequest:
     scale: float = 1.0
     material: str = "iron"
     quantity: int = 1
-
+    style: str = "sword"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
-    return re.search(pattern, text, flags=re.IGNORECASE) is not None
-
+    return re.search(
+        pattern,
+        text,
+        flags=re.IGNORECASE,
+    ) is not None
 
 def detect_scale(text: str) -> float:
     if contains_word(text, "tiny"):
@@ -103,12 +110,71 @@ def detect_quantity(prompt: str) -> int:
 
 
 def detect_object_type(text: str) -> str | None:
-    for object_type, synonyms in OBJECT_SYNONYMS.items():
-        if any(contains_word(text, word) for word in synonyms):
-            return object_type
+    """Detect which supported object the text describes."""
+
+    text_lower = text.lower()
+
+    weapon_words = (
+        "sword",
+        "swords",
+        "blade",
+        "blades",
+        "longsword",
+        "longswords",
+        "broadsword",
+        "broadswords",
+        "dagger",
+        "daggers",
+        "greatsword",
+        "greatswords",
+        "weapon",
+        "weapons",
+    )
+
+    tree_words = (
+        "tree",
+        "trees",
+        "pine",
+        "pines",
+        "oak",
+        "oaks",
+        "sapling",
+        "saplings",
+    )
+
+    cube_words = (
+        "cube",
+        "cubes",
+        "box",
+        "boxes",
+        "block",
+        "blocks",
+    )
+
+    sphere_words = (
+        "sphere",
+        "spheres",
+        "ball",
+        "balls",
+        "orb",
+        "orbs",
+        "globe",
+        "globes",
+    )
+
+    if any(word in text_lower for word in weapon_words):
+        return "sword"
+
+    if any(word in text_lower for word in tree_words):
+        return "tree"
+
+    if any(word in text_lower for word in cube_words):
+        return "cube"
+
+    if any(word in text_lower for word in sphere_words):
+        return "sphere"
 
     return None
-
 
 def split_prompt(prompt: str) -> list[str]:
     sections = re.split(
@@ -123,24 +189,51 @@ def split_prompt(prompt: str) -> list[str]:
         if section.strip()
     ]
 
+def detect_weapon_style(text: str) -> str:
+    """Detect which sword-family style the user requested."""
+
+    if contains_word(text, "dagger") or contains_word(text, "daggers"):
+        return "dagger"
+
+    if (
+        contains_word(text, "greatsword")
+        or contains_word(text, "greatswords")
+    ):
+        return "greatsword"
+
+    return "sword"
 
 def parse_prompt(prompt: str) -> list[AssetRequest]:
+    """Convert the prompt into structured asset requests."""
+
     asset_requests: list[AssetRequest] = []
 
     for section in split_prompt(prompt):
         object_type = detect_object_type(section)
 
+        print("SECTION:", section)
+        print("OBJECT:", object_type)
+
         if object_type is None:
             continue
 
         asset_requests.append(
-             AssetRequest(
+            AssetRequest(
                 object_type=object_type,
                 scale=detect_scale(section),
                 material=detect_material(section),
                 quantity=detect_quantity(section),
-    )
-)
+                style=detect_weapon_style(section),
+            )
+        )
+
+    if not asset_requests:
+        raise ValueError(
+            "Genesis did not recognize any supported objects. "
+            "Try sword, tree, cube, or sphere."
+        )
+
+    return asset_requests
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "

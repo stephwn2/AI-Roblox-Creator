@@ -12,7 +12,8 @@ def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
         return create_sword(
             scale=asset.scale,
             material=asset.material,
-        )
+            style=asset.style,
+    )
 
     if asset.object_type == "tree":
         return create_tree(scale=asset.scale)
