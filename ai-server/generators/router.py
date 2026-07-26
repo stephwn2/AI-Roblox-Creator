@@ -13,8 +13,11 @@ def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
             scale=asset.scale,
             material=asset.material,
             style=asset.style,
-    )
-
+            blade_length=asset.blade_length,
+            blade_width=asset.blade_width,
+            condition=asset.condition,
+        )
+    
     if asset.object_type == "tree":
         return create_tree(scale=asset.scale)
 

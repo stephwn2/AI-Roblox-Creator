@@ -57,6 +57,9 @@ class AssetRequest:
     material: str = "iron"
     quantity: int = 1
     style: str = "sword"
+    blade_length: float = 1.0
+    blade_width: float = 1.0
+    condition: str = "clean"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
@@ -192,16 +195,61 @@ def split_prompt(prompt: str) -> list[str]:
 def detect_weapon_style(text: str) -> str:
     """Detect which sword-family style the user requested."""
 
-    if contains_word(text, "dagger") or contains_word(text, "daggers"):
-        return "dagger"
-
     if (
         contains_word(text, "greatsword")
         or contains_word(text, "greatswords")
     ):
         return "greatsword"
 
+    if (
+        contains_word(text, "broadsword")
+        or contains_word(text, "broadswords")
+    ):
+        return "broadsword"
+
+    if (
+        contains_word(text, "dagger")
+        or contains_word(text, "daggers")
+    ):
+        return "dagger"
+
     return "sword"
+
+def detect_blade_length(text: str) -> float:
+    """Detect blade-length adjectives."""
+
+    if contains_word(text, "short"):
+        return 0.70
+
+    if contains_word(text, "long"):
+        return 1.30
+
+    return 1.0
+
+def detect_blade_width(text: str) -> float:
+    """Detect blade width."""
+
+    if contains_word(text, "thin"):
+        return 0.70
+
+    if contains_word(text, "narrow"):
+        return 0.80
+
+    if contains_word(text, "wide"):
+        return 1.30
+
+    if contains_word(text, "fat"):
+        return 1.45
+
+    return 1.0
+
+def detect_condition(text: str) -> str:
+    """Detect the object's surface condition."""
+
+    if contains_word(text, "rusty") or contains_word(text, "rusted"):
+        return "rusty"
+
+    return "clean"
 
 def parse_prompt(prompt: str) -> list[AssetRequest]:
     """Convert the prompt into structured asset requests."""
@@ -211,8 +259,6 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
     for section in split_prompt(prompt):
         object_type = detect_object_type(section)
 
-        print("SECTION:", section)
-        print("OBJECT:", object_type)
 
         if object_type is None:
             continue
@@ -224,7 +270,10 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
                 material=detect_material(section),
                 quantity=detect_quantity(section),
                 style=detect_weapon_style(section),
-            )
+                blade_length=detect_blade_length(section),
+                blade_width=detect_blade_width(section),
+                condition=detect_condition(section),
+)
         )
 
     if not asset_requests:
