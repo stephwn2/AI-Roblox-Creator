@@ -2,7 +2,7 @@ import numpy as np
 import trimesh
 
 
-def create_sword() -> trimesh.Scene:
+def create_sword(scale: float = 1.0) -> trimesh.Scene:
     """Create a recognizable low-poly game sword."""
 
     blade_vertices = np.array([
@@ -67,4 +67,6 @@ def create_sword() -> trimesh.Scene:
     scene.add_geometry(handle, node_name="Handle")
     scene.add_geometry(pommel, node_name="Pommel")
 
+    for geometry in scene.geometry.values():
+        geometry.apply_scale(scale)
     return scene

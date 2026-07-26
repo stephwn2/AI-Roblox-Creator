@@ -1,7 +1,7 @@
 import trimesh
 
 
-def create_tree() -> trimesh.Scene:
+def create_tree(scale: float = 1.0) -> trimesh.Scene:
     """Create a simple low-poly pine tree."""
 
     trunk = trimesh.creation.cylinder(
@@ -33,4 +33,6 @@ def create_tree() -> trimesh.Scene:
     scene.add_geometry(leaves_bottom, node_name="LeavesBottom")
     scene.add_geometry(leaves_top, node_name="LeavesTop")
 
+    for geometry in scene.geometry.values():
+        geometry.apply_scale(scale)
     return scene
