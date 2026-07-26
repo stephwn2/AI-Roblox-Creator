@@ -5,8 +5,8 @@ import trimesh
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from generators.weapon_generator import create_sword
-from generators.nature_generator import create_tree
+from generators.router import route_prompt
+
 
 app = FastAPI(title="Genesis AI Server")
 
@@ -31,32 +31,6 @@ def health_check():
 
 
 
-
-def generate_scene(prompt: str) -> trimesh.Scene:
-    prompt_lower = prompt.lower()
-
-    if "sword" in prompt_lower:
-        return create_sword()
-
-    if "tree" in prompt_lower:
-        return create_tree()
-
-    if "cube" in prompt_lower or "box" in prompt_lower:
-        mesh = trimesh.creation.box(extents=(2, 2, 2))
-        return trimesh.Scene(mesh)
-
-    if "sphere" in prompt_lower or "ball" in prompt_lower:
-        mesh = trimesh.creation.icosphere(
-            subdivisions=3,
-            radius=1.2,
-        )
-        return trimesh.Scene(mesh)
-
-    raise ValueError(
-        "Try a prompt containing cube, sphere, sword, or tree."
-    )
-
-
 @app.post("/generate")
 def generate_model(request: GenerateRequest):
     prompt = request.prompt.strip()
@@ -68,7 +42,7 @@ def generate_model(request: GenerateRequest):
         )
 
     try:
-        scene = generate_scene(prompt)
+        scene = route_prompt(prompt)
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
