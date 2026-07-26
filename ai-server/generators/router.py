@@ -4,6 +4,34 @@ from generators.nature_generator import create_tree
 from generators.weapon_generator import create_sword
 
 
+OBJECT_SYNONYMS = {
+    "sword": (
+        "sword",
+        "blade",
+        "longsword",
+        "broadsword",
+        "weapon",
+    ),
+    "tree": (
+        "tree",
+        "pine",
+        "oak",
+        "sapling",
+    ),
+    "cube": (
+        "cube",
+        "box",
+        "block",
+    ),
+    "sphere": (
+        "sphere",
+        "ball",
+        "orb",
+        "globe",
+    ),
+}
+
+
 def detect_scale(prompt: str) -> float:
     """Read size words from a prompt and return a scale multiplier."""
 
@@ -23,6 +51,7 @@ def detect_scale(prompt: str) -> float:
 
     return 1.0
 
+
 def detect_material(prompt: str) -> str:
     """Detect a basic material word in the prompt."""
 
@@ -39,47 +68,51 @@ def detect_material(prompt: str) -> str:
 
     return "iron"
 
+
+def detect_object_type(prompt: str) -> str:
+    """Determine which supported object the prompt describes."""
+
+    prompt_lower = prompt.lower()
+
+    for object_type, words in OBJECT_SYNONYMS.items():
+        if any(word in prompt_lower for word in words):
+            return object_type
+
+    raise ValueError(
+        "Genesis does not recognize that object yet. "
+        "Try a sword, tree, cube, or sphere."
+    )
+
+
 def route_prompt(prompt: str) -> trimesh.Scene:
     """Choose a generator and apply prompt attributes."""
 
     prompt_lower = prompt.lower().strip()
+
     scale = detect_scale(prompt_lower)
     material = detect_material(prompt_lower)
+    object_type = detect_object_type(prompt_lower)
 
-    weapon_words = (
-        "sword",
-        "blade",
-    )
-
-    nature_words = (
-        "tree",
-        "pine",
-        "oak",
-    )
-
-    if any(word in prompt_lower for word in weapon_words):
+    if object_type == "sword":
         return create_sword(
-        scale=scale,
-        material=material,
+            scale=scale,
+            material=material,
         )
 
-    if any(word in prompt_lower for word in nature_words):
+    if object_type == "tree":
         return create_tree(scale=scale)
 
-    if "cube" in prompt_lower or "box" in prompt_lower:
+    if object_type == "cube":
         cube = trimesh.creation.box(
             extents=(2 * scale, 2 * scale, 2 * scale),
         )
         return trimesh.Scene(cube)
 
-    if "sphere" in prompt_lower or "ball" in prompt_lower:
+    if object_type == "sphere":
         sphere = trimesh.creation.icosphere(
             subdivisions=3,
             radius=1.2 * scale,
         )
         return trimesh.Scene(sphere)
 
-    raise ValueError(
-        "Genesis does not recognize that object yet. "
-        "Try sword, tree, cube, or sphere."
-    )
+    raise ValueError("Unsupported object type.")
