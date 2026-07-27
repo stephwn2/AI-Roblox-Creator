@@ -57,7 +57,7 @@ class GENESIS_OT_generate(bpy.types.Operator):
             self.report({"ERROR"}, f"Server error: {exc}")
             return {"CANCELLED"}
 
-        model_path = data.get("model_path", "")
+        model_path = data.get("path", "")
 
         if not os.path.isfile(model_path):
             self.report({"ERROR"}, "Generated model file was not found.")
@@ -75,7 +75,7 @@ class GENESIS_OT_generate(bpy.types.Operator):
         if imported_objects:
             imported_objects[0].name = data["prompt"]
 
-        self.report({"INFO"}, data["message"])
+        self.report({"INFO"}, "Model imported successfully.")
         return {"FINISHED"}
 
 
