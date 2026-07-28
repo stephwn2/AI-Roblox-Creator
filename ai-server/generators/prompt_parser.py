@@ -19,6 +19,10 @@ OBJECT_SYNONYMS = {
         "greatsword",
         "greatswords",
     ),
+    "shield": (
+        "shield",
+        "shields",
+    ),
     "tree": (
         "tree",
         "trees",
@@ -47,6 +51,7 @@ OBJECT_SYNONYMS = {
         "globe",
         "globes",
     ),
+    
 }
 
 
@@ -60,6 +65,7 @@ class AssetRequest:
     blade_length: float = 1.0
     blade_width: float = 1.0
     condition: str = "clean"
+    shield_style: str = "round"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
@@ -134,6 +140,41 @@ def detect_object_type(text: str) -> str | None:
         "weapons",
     )
 
+    weapon_words = (
+        "sword",
+        "swords",
+        "blade",
+        "blades",
+        "longsword",
+        "longswords",
+        "broadsword",
+        "broadswords",
+        "dagger",
+        "daggers",
+        "greatsword",
+        "greatswords",
+        "weapon",
+        "weapons",
+    )
+
+    shield_words = (
+        "shield",
+        "shields",
+        "buckler",
+        "bucklers",
+    )
+
+    tree_words = (
+        "tree",
+        "trees",
+        "pine",
+        "pines",
+        "oak",
+        "oaks",
+        "sapling",
+        "saplings",
+    )
+
     tree_words = (
         "tree",
         "trees",
@@ -167,6 +208,9 @@ def detect_object_type(text: str) -> str | None:
 
     if any(word in text_lower for word in weapon_words):
         return "sword"
+
+    if any(word in text_lower for word in shield_words):
+        return "shield"
 
     if any(word in text_lower for word in tree_words):
         return "tree"
@@ -244,12 +288,32 @@ def detect_blade_width(text: str) -> float:
     return 1.0
 
 def detect_condition(text: str) -> str:
-    """Detect the object's surface condition."""
+    """Detect the object's physical condition."""
+
+    if contains_word(text, "broken"):
+        return "broken"
 
     if contains_word(text, "rusty") or contains_word(text, "rusted"):
         return "rusty"
 
     return "clean"
+
+def detect_shield_style(text: str) -> str:
+    """Detect the requested shield style."""
+
+    if contains_word(text, "tower"):
+        return "tower"
+
+    if contains_word(text, "kite"):
+        return "kite"
+
+    if (
+        contains_word(text, "buckler")
+        or contains_word(text, "bucklers")
+    ):
+        return "buckler"
+
+    return "round"
 
 def parse_prompt(prompt: str) -> list[AssetRequest]:
     """Convert the prompt into structured asset requests."""
@@ -273,20 +337,21 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
                 blade_length=detect_blade_length(section),
                 blade_width=detect_blade_width(section),
                 condition=detect_condition(section),
+                shield_style=detect_shield_style(section),
 )
         )
 
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, tree, cube, or sphere."
+            "Try sword, shield, tree, cube, or sphere."
         )
 
     return asset_requests
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, tree, cube, or sphere."
+            "Try sword, shield, tree, cube, or sphere."
         )
 
     return asset_requests
