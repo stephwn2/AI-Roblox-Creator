@@ -4,6 +4,7 @@ from generators.nature_generator import create_tree
 from generators.prompt_parser import AssetRequest, parse_prompt
 from generators.weapon_generator import create_sword
 from generators.shield_generator import create_shield
+from generators.axe_generator import create_axe
 
 
 def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
@@ -17,6 +18,12 @@ def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
             blade_length=asset.blade_length,
             blade_width=asset.blade_width,
             condition=asset.condition,
+        )
+    if asset.object_type == "axe":
+        return create_axe(
+            scale=asset.scale,
+            material=asset.material,
+            style=asset.axe_style,
         )
     if asset.object_type == "shield":
         return create_shield(

@@ -66,6 +66,7 @@ class AssetRequest:
     blade_width: float = 1.0
     condition: str = "clean"
     shield_style: str = "round"
+    axe_style: str = "axe"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
@@ -157,6 +158,15 @@ def detect_object_type(text: str) -> str | None:
         "weapons",
     )
 
+    axe_words = (
+        "axe",
+        "axes",
+        "hatchet",
+        "hatchets",
+        "battleaxe",
+        "battleaxes",
+    )
+
     shield_words = (
         "shield",
         "shields",
@@ -205,6 +215,9 @@ def detect_object_type(text: str) -> str | None:
         "globe",
         "globes",
     )
+
+    if any(word in text_lower for word in axe_words):
+        return "axe"
 
     if any(word in text_lower for word in weapon_words):
         return "sword"
@@ -315,6 +328,34 @@ def detect_shield_style(text: str) -> str:
 
     return "round"
 
+def detect_axe_style(text: str) -> str:
+    """Detect the requested axe style."""
+
+    if (
+        contains_word(text, "double")
+        or contains_word(text, "doubleaxe")
+        or contains_word(text, "doubleaxes")
+    ):
+        return "double"
+
+    if (
+        contains_word(text, "battleaxe")
+        or contains_word(text, "battleaxes")
+        or (
+            contains_word(text, "battle")
+            and contains_word(text, "axe")
+        )
+    ):
+        return "battle"
+
+    if (
+        contains_word(text, "hatchet")
+        or contains_word(text, "hatchets")
+    ):
+        return "hatchet"
+
+    return "axe"
+
 def parse_prompt(prompt: str) -> list[AssetRequest]:
     """Convert the prompt into structured asset requests."""
 
@@ -338,20 +379,21 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
                 blade_width=detect_blade_width(section),
                 condition=detect_condition(section),
                 shield_style=detect_shield_style(section),
+                axe_style=detect_axe_style(section),
 )
         )
 
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, shield, tree, cube, or sphere."
+            "Try sword, axe, shield, tree, cube, or sphere."
         )
 
     return asset_requests
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, shield, tree, cube, or sphere."
+            "Try sword, axe, shield, tree, cube, or sphere."
         )
 
     return asset_requests
