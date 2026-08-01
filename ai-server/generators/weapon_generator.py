@@ -9,6 +9,9 @@ from generators.weapon_parts.material import get_material_palette
 from generators.weapon_parts.condition import (
     get_blade_condition_multiplier,
 )
+from generators.weapon_parts.decorations.router import (
+    create_weapon_decorations,
+)
 
 WEAPON_STYLES = {
     "sword": {
@@ -72,13 +75,23 @@ def create_sword(
     material: str = "iron",
     variation: bool = True,
     style: str = "sword",
+    blade_style: str = "sword",
+    guard_style: str = "cross",
+    handle_style: str = "wood",
+    pommel_style: str = "round",
     blade_length: float = 1.0,
     blade_width: float = 1.0,
     guard_width: float = 1.0,
     handle_length: float = 1.0,
     condition: str = "clean",
+    gemstone: str = "none",
+    engraving: str = "none",
+    blade_attachment: str = "none",
+    guard_attachment: str = "none",
+    handle_attachment: str = "none",
+    pommel_attachment: str = "none",
 ) -> trimesh.Scene:
-    """Create a modular low-poly sword."""
+    """Create a modular weapon with optional decorations."""
 
     colors = get_material_palette(
         material=material,
@@ -96,7 +109,6 @@ def create_sword(
         variation_guard_width = random.uniform(0.80, 1.25)
         variation_handle_length = random.uniform(0.85, 1.15)
         pommel_size_multiplier = random.uniform(0.80, 1.20)
-
     else:
         variation_blade_length = 1.0
         variation_blade_width = 1.0
@@ -137,25 +149,25 @@ def create_sword(
         length_multiplier=blade_length_multiplier,
         width_multiplier=blade_width_multiplier,
         color=colors["blade"],
-        style=style,
+        style=blade_style,
     )
 
     guard = create_guard(
         width_multiplier=guard_width_multiplier,
         color=colors["guard"],
-        style=style,
+        style=guard_style,
     )
 
     handle = create_handle(
         length_multiplier=handle_length_multiplier,
         color=colors["handle"],
-        style=style,
+        style=handle_style,
     )
 
     pommel = create_pommel(
         size_multiplier=pommel_size_multiplier,
         color=colors["pommel"],
-        style=style,
+        style=pommel_style,
     )
 
     scene = trimesh.Scene()
@@ -164,21 +176,33 @@ def create_sword(
         blade,
         node_name="Blade",
     )
-
     scene.add_geometry(
         guard,
         node_name="Guard",
     )
-
     scene.add_geometry(
         handle,
         node_name="Handle",
     )
-
     scene.add_geometry(
         pommel,
         node_name="Pommel",
     )
+
+    decorations = create_weapon_decorations(
+    gemstone=gemstone,
+    pommel_style=pommel_style,
+    engraving=engraving,
+    blade_attachment=blade_attachment,
+    guard_attachment=guard_attachment,
+    handle_attachment=handle_attachment,
+    pommel_attachment=pommel_attachment,
+)
+    for decoration_name, decoration_mesh in decorations:
+        scene.add_geometry(
+            decoration_mesh,
+            node_name=decoration_name,
+        )
 
     for geometry in scene.geometry.values():
         geometry.apply_scale(scale)

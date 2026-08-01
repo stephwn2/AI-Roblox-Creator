@@ -20,35 +20,35 @@ from generators.weapon_parts.guards.tsuba_guard import (
 def create_guard(
     width_multiplier: float,
     color: list[int],
-    style: str = "sword",
+    style: str = "cross",
 ) -> trimesh.Trimesh:
-    """Route the requested weapon style to its guard generator."""
+    """Route an explicit guard style to its generator."""
 
-    if style == "katana":
-        return create_tsuba_guard(
-            width_multiplier=width_multiplier,
-            color=color,
-        )
+    normalized_style = style.strip().lower()
 
-    if style == "rapier":
-        return create_rapier_guard(
-            width_multiplier=width_multiplier,
-            color=color,
-        )
+    guard_generators = {
+        "cross": create_cross_guard,
+        "round": create_round_guard,
+        "tsuba": create_tsuba_guard,
+        "rapier": create_rapier_guard,
+        "great": create_great_guard,
 
-    if style == "greatsword":
-        return create_great_guard(
-            width_multiplier=width_multiplier,
-            color=color,
-        )
+        # Compatibility with older weapon-family values.
+        "sword": create_cross_guard,
+        "dagger": create_cross_guard,
+        "shortsword": create_cross_guard,
+        "longsword": create_cross_guard,
+        "broadsword": create_cross_guard,
+        "katana": create_tsuba_guard,
+        "greatsword": create_great_guard,
+    }
 
-    if style == "round":
-        return create_round_guard(
-            width_multiplier=width_multiplier,
-            color=color,
-        )
+    generator = guard_generators.get(
+        normalized_style,
+        create_cross_guard,
+    )
 
-    return create_cross_guard(
+    return generator(
         width_multiplier=width_multiplier,
         color=color,
     )

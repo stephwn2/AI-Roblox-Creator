@@ -6,6 +6,7 @@ from generators.attributes import (
     get_registered_values,
     normalize_attribute,
 )
+from generators.attribute_parser import parse_attributes
 
 
 OBJECT_SYNONYMS = {
@@ -63,16 +64,24 @@ OBJECT_SYNONYMS = {
 
 @dataclass
 class AssetRequest:
+    """Structured instructions for one requested asset."""
+
     object_type: str
     scale: float = 1.0
     material: str = "iron"
     quantity: int = 1
+
     style: str = "sword"
     blade_length: float = 1.0
     blade_width: float = 1.0
+    guard_width: float = 1.0
+    handle_length: float = 1.0
+
     condition: str = "clean"
     shield_style: str = "round"
     axe_style: str = "axe"
+
+    gemstone: str = "none"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
@@ -376,13 +385,34 @@ def detect_blade_width(text: str) -> float:
     return 1.0
 
 def detect_condition(text: str) -> str:
-    """Detect the object's physical condition."""
+    """Detect and normalize the requested object condition."""
 
-    if contains_word(text, "broken"):
-        return "broken"
+    normalized_text = text.strip().lower()
 
-    if contains_word(text, "rusty") or contains_word(text, "rusted"):
-        return "rusty"
+    condition_aliases = ATTRIBUTE_ALIASES.get(
+        "condition",
+        {},
+    )
+
+    sorted_aliases = sorted(
+        condition_aliases.items(),
+        key=lambda item: len(item[0]),
+        reverse=True,
+    )
+
+    for alias, registered_condition in sorted_aliases:
+        if alias in normalized_text:
+            return normalize_attribute(
+                category="condition",
+                value=registered_condition,
+            )
+
+    for condition in get_registered_values("condition"):
+        if contains_word(normalized_text, condition):
+            return normalize_attribute(
+                category="condition",
+                value=condition,
+            )
 
     return "clean"
 
@@ -439,32 +469,39 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
     for section in split_prompt(prompt):
         object_type = detect_object_type(section)
 
-
         if object_type is None:
             continue
+
+        attributes = parse_attributes(section)
+
+        if object_type == "sword":
+            material = attributes.material
+            condition = attributes.condition
+            style = attributes.weapon_style
+            gemstone = attributes.gemstone
+
+        else:
+            material = detect_material(section)
+            condition = detect_condition(section)
+            style = detect_weapon_style(section)
+            gemstone = "none"
 
         asset_requests.append(
             AssetRequest(
                 object_type=object_type,
                 scale=detect_scale(section),
-                material=detect_material(section),
+                material=material,
                 quantity=detect_quantity(section),
-                style=detect_weapon_style(section),
+                style=style,
                 blade_length=detect_blade_length(section),
                 blade_width=detect_blade_width(section),
-                condition=detect_condition(section),
+                condition=condition,
                 shield_style=detect_shield_style(section),
                 axe_style=detect_axe_style(section),
-)
+                gemstone=gemstone,
+            )
         )
 
-    if not asset_requests:
-        raise ValueError(
-            "Genesis did not recognize any supported objects. "
-            "Try sword, axe, shield, tree, cube, or sphere."
-        )
-
-    return asset_requests
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "

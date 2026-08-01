@@ -5,26 +5,48 @@ from generators.prompt_parser import AssetRequest, parse_prompt
 from generators.weapon_generator import create_sword
 from generators.shield_generator import create_shield
 from generators.axe_generator import create_axe
+from generators.blueprints import (
+    asset_request_to_weapon_blueprint,
+)
 
+def create_sword_scene(asset):
+    """Convert a sword request into a blueprint and build it."""
+
+    blueprint = asset_request_to_weapon_blueprint(asset)
+
+    return create_sword(
+        scale=blueprint.scale,
+        material=blueprint.material,
+        style=blueprint.style,
+        blade_style=blueprint.blade_style,
+        guard_style=blueprint.guard_style,
+        handle_style=blueprint.handle_style,
+        pommel_style=blueprint.pommel_style,
+        blade_length=blueprint.blade_length,
+        blade_width=blueprint.blade_width,
+        guard_width=blueprint.guard_width,
+        handle_length=blueprint.handle_length,
+        condition=blueprint.condition,
+        gemstone=blueprint.gemstone,
+        engraving=blueprint.engraving,
+        blade_attachment=blueprint.blade_attachment,
+        guard_attachment=blueprint.guard_attachment,
+        handle_attachment=blueprint.handle_attachment,
+        pommel_attachment=blueprint.pommel_attachment,
+    )
 
 def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
     """Generate one object using its parsed instructions."""
 
     if asset.object_type == "sword":
-        return create_sword(
-            scale=asset.scale,
-            material=asset.material,
-            style=asset.style,
-            blade_length=asset.blade_length,
-            blade_width=asset.blade_width,
-            condition=asset.condition,
-        )
+        return create_sword_scene(asset)
+
     if asset.object_type == "axe":
-        return create_axe(
-            scale=asset.scale,
-            material=asset.material,
-            style=asset.axe_style,
-        )
+            return create_axe(
+                scale=asset.scale,
+                material=asset.material,
+                style=asset.axe_style,
+            )
     if asset.object_type == "shield":
         return create_shield(
             scale=asset.scale,

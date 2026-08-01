@@ -17,29 +17,35 @@ from generators.weapon_parts.pommels.round_pommel import (
 def create_pommel(
     size_multiplier: float,
     color: list[int],
-    style: str = "sword",
+    style: str = "round",
 ) -> trimesh.Trimesh:
-    """Route the requested weapon style to its pommel generator."""
+    """Route an explicit pommel style to its generator."""
 
-    if style == "katana":
-        return create_flat_pommel(
-            size_multiplier=size_multiplier,
-            color=color,
-        )
+    normalized_style = style.strip().lower()
 
-    if style == "greatsword":
-        return create_heavy_pommel(
-            size_multiplier=size_multiplier,
-            color=color,
-        )
+    pommel_generators = {
+        "round": create_round_pommel,
+        "flat": create_flat_pommel,
+        "heavy": create_heavy_pommel,
+        "gem": create_gem_pommel,
 
-    if style == "rapier":
-        return create_gem_pommel(
-            size_multiplier=size_multiplier,
-            color=color,
-        )
+        # Compatibility with older weapon-family values.
+        "sword": create_round_pommel,
+        "dagger": create_round_pommel,
+        "shortsword": create_round_pommel,
+        "longsword": create_round_pommel,
+        "broadsword": create_round_pommel,
+        "katana": create_flat_pommel,
+        "greatsword": create_heavy_pommel,
+        "rapier": create_gem_pommel,
+    }
 
-    return create_round_pommel(
+    generator = pommel_generators.get(
+        normalized_style,
+        create_round_pommel,
+    )
+
+    return generator(
         size_multiplier=size_multiplier,
         color=color,
     )

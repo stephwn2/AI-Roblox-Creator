@@ -66,6 +66,15 @@ ATTRIBUTE_REGISTRY: Final[dict[str, tuple[str, ...]]] = {
         "double",
         "great",
     ),
+
+    "gemstone": (
+        "ruby",
+        "sapphire",
+        "emerald",
+        "diamond",
+        "amethyst",
+        "onyx",
+        ),
 }
 
 
@@ -100,6 +109,14 @@ ATTRIBUTE_ALIASES: Final[dict[str, dict[str, str]]] = {
         "long sword": "longsword",
         "short sword": "shortsword",
         "broad sword": "broadsword",
+    },
+
+    "gemstone": {
+        "red gem": "ruby",
+        "blue gem": "sapphire",
+        "green gem": "emerald",
+        "purple gem": "amethyst",
+        "black gem": "onyx",
     },
 }
 
