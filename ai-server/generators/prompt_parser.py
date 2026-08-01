@@ -1,6 +1,12 @@
 import re
 from dataclasses import dataclass
 
+from generators.attributes import (
+    ATTRIBUTE_ALIASES,
+    get_registered_values,
+    normalize_attribute,
+)
+
 
 OBJECT_SYNONYMS = {
     "sword": (
@@ -93,17 +99,35 @@ def detect_scale(text: str) -> float:
 
 
 def detect_material(text: str) -> str:
-    if contains_word(text, "gold") or contains_word(text, "golden"):
-        return "gold"
+    """Detect and normalize the requested material."""
 
-    if contains_word(text, "wood") or contains_word(text, "wooden"):
-        return "wood"
+    normalized_text = text.strip().lower()
 
-    if any(
-        contains_word(text, word)
-        for word in ("iron", "steel", "metal")
-    ):
-        return "iron"
+    material_aliases = ATTRIBUTE_ALIASES.get(
+        "material",
+        {},
+    )
+
+    # Check longer aliases first, such as "black glass".
+    sorted_aliases = sorted(
+        material_aliases.items(),
+        key=lambda item: len(item[0]),
+        reverse=True,
+    )
+
+    for alias, registered_material in sorted_aliases:
+        if alias in normalized_text:
+            return normalize_attribute(
+                category="material",
+                value=registered_material,
+            )
+
+    for material in get_registered_values("material"):
+        if contains_word(normalized_text, material):
+            return normalize_attribute(
+                category="material",
+                value=material,
+            )
 
     return "iron"
 
@@ -125,38 +149,49 @@ def detect_object_type(text: str) -> str | None:
     text_lower = text.lower()
 
     weapon_words = (
-        "sword",
-        "swords",
-        "blade",
-        "blades",
-        "longsword",
-        "longswords",
-        "broadsword",
-        "broadswords",
-        "dagger",
-        "daggers",
-        "greatsword",
-        "greatswords",
-        "weapon",
-        "weapons",
-    )
-
+    "sword",
+    "swords",
+    "blade",
+    "blades",
+    "longsword",
+    "longswords",
+    "shortsword",
+    "shortswords",
+    "broadsword",
+    "broadswords",
+    "greatsword",
+    "greatswords",
+    "katana",
+    "katanas",
+    "rapier",
+    "rapiers",
+    "dagger",
+    "daggers",
+    "weapon",
+    "weapons",
+)
     weapon_words = (
-        "sword",
-        "swords",
-        "blade",
-        "blades",
-        "longsword",
-        "longswords",
-        "broadsword",
-        "broadswords",
-        "dagger",
-        "daggers",
-        "greatsword",
-        "greatswords",
-        "weapon",
-        "weapons",
-    )
+    "sword",
+    "swords",
+    "blade",
+    "blades",
+    "longsword",
+    "longswords",
+    "shortsword",
+    "shortswords",
+    "broadsword",
+    "broadswords",
+    "greatsword",
+    "greatswords",
+    "katana",
+    "katanas",
+    "rapier",
+    "rapiers",
+    "dagger",
+    "daggers",
+    "weapon",
+    "weapons",
+)
 
     axe_words = (
         "axe",
@@ -250,25 +285,65 @@ def split_prompt(prompt: str) -> list[str]:
     ]
 
 def detect_weapon_style(text: str) -> str:
-    """Detect which sword-family style the user requested."""
-
-    if (
-        contains_word(text, "greatsword")
-        or contains_word(text, "greatswords")
-    ):
-        return "greatsword"
-
-    if (
-        contains_word(text, "broadsword")
-        or contains_word(text, "broadswords")
-    ):
-        return "broadsword"
+    """Detect which sword-family style was requested."""
 
     if (
         contains_word(text, "dagger")
         or contains_word(text, "daggers")
     ):
         return "dagger"
+
+    if (
+        contains_word(text, "shortsword")
+        or contains_word(text, "shortswords")
+        or (
+            contains_word(text, "short")
+            and contains_word(text, "sword")
+        )
+    ):
+        return "shortsword"
+
+    if (
+        contains_word(text, "greatsword")
+        or contains_word(text, "greatswords")
+        or (
+            contains_word(text, "great")
+            and contains_word(text, "sword")
+        )
+    ):
+        return "greatsword"
+
+    if (
+        contains_word(text, "broadsword")
+        or contains_word(text, "broadswords")
+        or (
+            contains_word(text, "broad")
+            and contains_word(text, "sword")
+        )
+    ):
+        return "broadsword"
+
+    if (
+        contains_word(text, "longsword")
+        or contains_word(text, "longswords")
+        or (
+            contains_word(text, "long")
+            and contains_word(text, "sword")
+        )
+    ):
+        return "longsword"
+
+    if (
+        contains_word(text, "katana")
+        or contains_word(text, "katanas")
+    ):
+        return "katana"
+
+    if (
+        contains_word(text, "rapier")
+        or contains_word(text, "rapiers")
+    ):
+        return "rapier"
 
     return "sword"
 
