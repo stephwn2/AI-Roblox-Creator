@@ -8,6 +8,7 @@ from generators.axe_generator import create_axe
 from generators.blueprints import (
     asset_request_to_weapon_blueprint,
 )
+from generators.building_generator import create_building
 
 def create_sword_scene(asset):
     """Convert a sword request into a blueprint and build it."""
@@ -35,49 +36,111 @@ def create_sword_scene(asset):
         pommel_attachment=blueprint.pommel_attachment,
     )
 
-def create_object_scene(asset: AssetRequest) -> trimesh.Scene:
-    """Generate one object using its parsed instructions."""
+def create_object_scene(asset):
+    """Create a scene for one parsed asset request."""
 
     if asset.object_type == "sword":
         return create_sword_scene(asset)
 
     if asset.object_type == "axe":
-            return create_axe(
-                scale=asset.scale,
-                material=asset.material,
-                style=asset.axe_style,
-            )
+        return create_axe(
+            scale=asset.scale,
+            material=asset.material,
+            style=asset.axe_style,
+        )
+
     if asset.object_type == "shield":
         return create_shield(
             scale=asset.scale,
             material=asset.material,
             style=asset.shield_style,
-    )
-    
-    if asset.object_type == "tree":
-        return create_tree(scale=asset.scale)
+        )
 
-    if asset.object_type == "cube":
-        cube = trimesh.creation.box(
-            extents=(
-                2 * asset.scale,
-                2 * asset.scale,
-                2 * asset.scale,
+    if asset.object_type == "tree":
+        return create_tree(
+            scale=asset.scale,
+            condition=asset.condition,
+            size=getattr(
+                asset,
+                "size",
+                "normal",
             ),
         )
-        return trimesh.Scene(cube)
+
+    if asset.object_type == "building":
+        return create_building(
+            scale=asset.scale,
+            material=asset.material,
+            style=getattr(
+                asset,
+                "building_style",
+                "house",
+            ),
+            condition=asset.condition,
+            size=getattr(
+                asset,
+                "size",
+                "normal",
+            ),
+            roof_style=getattr(
+                asset,
+                "roof_style",
+                "gable",
+            ),
+            floor_count=getattr(
+                asset,
+                "floor_count",
+                1,
+            ),
+            door_count=getattr(
+                asset,
+                "door_count",
+                1,
+            ),
+            window_count=getattr(
+                asset,
+                "window_count",
+                4,
+            ),
+            has_chimney=getattr(
+                asset,
+                "has_chimney",
+                False,
+            ),
+            has_balcony=getattr(
+                asset,
+                "has_balcony",
+                False,
+            ),
+            has_tower=getattr(
+                asset,
+                "has_tower",
+                False,
+            ),
+        )
+
+    if asset.object_type == "cube":
+        return trimesh.Scene(
+            trimesh.creation.box(
+                extents=(
+                    asset.scale,
+                    asset.scale,
+                    asset.scale,
+                )
+            )
+        )
 
     if asset.object_type == "sphere":
         sphere = trimesh.creation.icosphere(
-            subdivisions=3,
-            radius=1.2 * asset.scale,
+            subdivisions=2,
+            radius=asset.scale,
         )
+
         return trimesh.Scene(sphere)
 
     raise ValueError(
         f"Unsupported object type: {asset.object_type}"
     )
-
 
 def route_prompt(prompt: str) -> trimesh.Scene:
     """Parse the prompt and generate every requested object."""

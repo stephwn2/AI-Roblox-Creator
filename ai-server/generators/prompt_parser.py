@@ -82,6 +82,7 @@ class AssetRequest:
     axe_style: str = "axe"
 
     gemstone: str = "none"
+    building_style: str = "house"
 
 def contains_word(text: str, word: str) -> bool:
     pattern = rf"\b{re.escape(word)}\b"
@@ -277,6 +278,37 @@ def detect_object_type(text: str) -> str | None:
 
     if any(word in text_lower for word in sphere_words):
         return "sphere"
+    if (
+        contains_word(text, "building")
+        or contains_word(text, "buildings")
+        or contains_word(text, "house")
+        or contains_word(text, "houses")
+        or contains_word(text, "cabin")
+        or contains_word(text, "cabins")
+        or contains_word(text, "hut")
+        or contains_word(text, "huts")
+        or contains_word(text, "tower")
+        or contains_word(text, "towers")
+        or contains_word(text, "watchtower")
+        or contains_word(text, "castle")
+        or contains_word(text, "castles")
+        or contains_word(text, "fortress")
+        or contains_word(text, "fortresses")
+        or contains_word(text, "warehouse")
+        or contains_word(text, "warehouses")
+        or contains_word(text, "tavern")
+        or contains_word(text, "inn")
+        or contains_word(text, "temple")
+        or contains_word(text, "shrine")
+        or contains_word(text, "church")
+        or contains_word(text, "chapel")
+        or contains_word(text, "apartment")
+        or contains_word(text, "apartments")
+        or contains_word(text, "skyscraper")
+        or contains_word(text, "farmhouse")
+        ):
+        
+        return "building"
 
     return None
 
@@ -461,6 +493,75 @@ def detect_axe_style(text: str) -> str:
 
     return "axe"
 
+def detect_building_style(text: str) -> str:
+    """Detect the requested building style."""
+
+    normalized_text = text.strip().lower()
+
+    building_styles = {
+        "watchtower": (
+            "watchtower",
+            "watch tower",
+        ),
+        "tower": (
+            "tower",
+        ),
+        "cabin": (
+            "cabin",
+            "log cabin",
+        ),
+        "hut": (
+            "hut",
+        ),
+        "castle": (
+            "castle",
+        ),
+        "fortress": (
+            "fortress",
+            "fort",
+        ),
+        "tavern": (
+            "tavern",
+            "inn",
+        ),
+        "warehouse": (
+            "warehouse",
+        ),
+        "temple": (
+            "temple",
+            "shrine",
+        ),
+        "church": (
+            "church",
+            "chapel",
+        ),
+        "apartment": (
+            "apartment",
+            "apartments",
+            "apartment building",
+        ),
+        "skyscraper": (
+            "skyscraper",
+            "high rise",
+            "high-rise",
+        ),
+        "farmhouse": (
+            "farmhouse",
+            "farm house",
+        ),
+        "house": (
+            "house",
+            "building",
+        ),
+    }
+
+    for style, phrases in building_styles.items():
+        for phrase in phrases:
+            if phrase in normalized_text:
+                return style
+
+    return "house"
+
 def parse_prompt(prompt: str) -> list[AssetRequest]:
     """Convert the prompt into structured asset requests."""
 
@@ -499,13 +600,14 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
                 shield_style=detect_shield_style(section),
                 axe_style=detect_axe_style(section),
                 gemstone=gemstone,
+                building_style=detect_building_style(section),
             )
         )
 
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, axe, shield, tree, cube, or sphere."
+            "Try sword, axe, shield, tree, building, cube, or sphere."
         )
 
     return asset_requests

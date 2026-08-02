@@ -1,0 +1,106 @@
+import random
+
+from generators.blueprints import BuildingBlueprint
+from generators.modifiers import get_asset_modifiers
+
+
+def create_building_blueprint(
+    building_style: str = "house",
+    material: str = "wood",
+    condition: str = "clean",
+    size: str = "normal",
+    roof_style: str = "gable",
+    floor_count: int = 1,
+    door_count: int = 1,
+    window_count: int = 4,
+    has_chimney: bool = False,
+    has_balcony: bool = False,
+    has_tower: bool = False,
+    variation: bool = True,
+) -> BuildingBlueprint:
+    """Create a complete procedural building blueprint."""
+
+    normalized_style = building_style.strip().lower()
+    normalized_material = material.strip().lower()
+    normalized_condition = condition.strip().lower()
+    normalized_size = size.strip().lower()
+    normalized_roof_style = roof_style.strip().lower()
+
+    modifiers = get_asset_modifiers(
+        size=normalized_size,
+        condition=normalized_condition,
+    )
+
+    if variation:
+        base_width = random.uniform(2.8, 3.6)
+        base_depth = random.uniform(2.6, 3.5)
+        base_wall_height = random.uniform(2.3, 2.9)
+        base_roof_height = random.uniform(0.9, 1.4)
+        base_wall_thickness = random.uniform(0.14, 0.22)
+    else:
+        base_width = 3.2
+        base_depth = 3.0
+        base_wall_height = 2.6
+        base_roof_height = 1.2
+        base_wall_thickness = 0.18
+
+    width = base_width * modifiers.width
+    depth = base_depth * modifiers.depth
+    wall_height = base_wall_height * modifiers.height
+    roof_height = base_roof_height * modifiers.height
+
+    resolved_floor_count = max(
+        int(floor_count),
+        1,
+    )
+
+    if normalized_style in {
+        "tower",
+        "watchtower",
+    }:
+        resolved_floor_count = max(
+            resolved_floor_count,
+            2,
+        )
+        width *= 0.80
+        depth *= 0.80
+        wall_height *= 1.15
+
+    elif normalized_style in {
+        "cabin",
+        "hut",
+    }:
+        width *= 0.85
+        depth *= 0.85
+        resolved_floor_count = 1
+
+    elif normalized_style in {
+        "castle",
+        "fortress",
+    }:
+        width *= 1.50
+        depth *= 1.50
+        wall_height *= 1.25
+        resolved_floor_count = max(
+            resolved_floor_count,
+            2,
+        )
+
+    return BuildingBlueprint(
+        building_style=normalized_style,
+        material=normalized_material,
+        condition=normalized_condition,
+        size=normalized_size,
+        width=width,
+        depth=depth,
+        wall_height=wall_height,
+        floor_count=resolved_floor_count,
+        roof_style=normalized_roof_style,
+        roof_height=roof_height,
+        door_count=max(int(door_count), 0),
+        window_count=max(int(window_count), 0),
+        has_chimney=bool(has_chimney),
+        has_balcony=bool(has_balcony),
+        has_tower=bool(has_tower),
+        wall_thickness=base_wall_thickness,
+    )
