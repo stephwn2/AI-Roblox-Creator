@@ -75,6 +75,7 @@ def create_building_blueprint(
         wall_height *= 1.80
         roof_height *= 1.50
 
+
     # Building-style modifiers
     if normalized_style in {
         "cabin",
@@ -142,6 +143,27 @@ def create_building_blueprint(
         normalized_roof_style = "flat"
 
     elif normalized_style in {
+            "farmhouse",
+            "farm house",
+        }:
+            width *= 1.40
+            depth *= 1.15
+            wall_height *= 1.05
+    
+            resolved_floor_count = max(
+                resolved_floor_count,
+                1,
+            )
+    
+            resolved_window_count = max(
+                resolved_window_count,
+                4,
+            )
+    
+            normalized_roof_style = "hip"
+            has_chimney = True
+
+    elif normalized_style in {
         "castle",
         "fortress",
     }:
@@ -158,6 +180,8 @@ def create_building_blueprint(
             resolved_window_count,
             resolved_floor_count * 4,
         )
+
+
 
     elif normalized_style in {
         "church",
@@ -218,8 +242,15 @@ def create_building_blueprint(
         }:
             normalized_roof_style = "flat"
 
+        elif normalized_style in {
+            "farmhouse",
+            "farm house",
+        }:
+            normalized_roof_style = "hip"
+
         else:
             normalized_roof_style = "gable"
+
 
     return BuildingBlueprint(
         building_style=normalized_style,

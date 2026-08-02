@@ -9,6 +9,7 @@ from generators.building_parts.walls import (
     create_exterior_walls,
     create_interior_wall_with_doorway,
 )
+from generators.building_parts.porch import create_porch
 
 
 BUILDING_MATERIAL_COLORS: dict[str, dict[str, list[int]]] = {
@@ -137,33 +138,62 @@ def create_gable_roof(
 
     return roof
 
-
-def create_flat_roof(
+def create_hip_roof(
     width: float,
     depth: float,
     roof_height: float,
     base_z: float,
     color: list[int],
 ) -> trimesh.Trimesh:
-    """Create a flat slab roof."""
+    """Create a four-sided hip roof with a horizontal center ridge."""
 
-    roof = trimesh.creation.box(
-        extents=(
-            width * 1.08,
-            depth * 1.08,
-            max(roof_height * 0.18, 0.16),
-        ),
+    half_width = width / 2
+    half_depth = depth / 2
+
+    ridge_half_length = max(
+    half_width * 0.18,
+    0.10,
+)
+
+    vertices = [
+        # Bottom corners
+        [-half_width, -half_depth, base_z],  # 0 front-left
+        [half_width, -half_depth, base_z],   # 1 front-right
+        [half_width, half_depth, base_z],    # 2 back-right
+        [-half_width, half_depth, base_z],   # 3 back-left
+
+        # Ridge points running left-to-right
+        [-ridge_half_length, 0.0, base_z + roof_height],  # 4
+        [ridge_half_length, 0.0, base_z + roof_height],   # 5
+    ]
+
+    faces = [
+        # Front slope
+        [0, 1, 5],
+        [0, 5, 4],
+
+        # Back slope
+        [3, 4, 5],
+        [3, 5, 2],
+
+        # Left triangular slope
+        [0, 4, 3],
+
+        # Right triangular slope
+        [1, 2, 5],
+
+        # Bottom closure
+        [0, 3, 2],
+        [0, 2, 1],
+    ]
+
+    roof = trimesh.Trimesh(
+        vertices=vertices,
+        faces=faces,
+        process=True,
     )
 
     roof.visual.face_colors = color
-
-    roof.apply_translation(
-        (
-            0.0,
-            0.0,
-            base_z,
-        )
-    )
 
     return roof
 
@@ -197,6 +227,40 @@ def create_cone_roof(
             0.0,
             0.0,
             base_z,
+        )
+    )
+
+    return roof
+
+def create_flat_roof(
+    width: float,
+    depth: float,
+    roof_height: float,
+    base_z: float,
+    color: list[int],
+) -> trimesh.Trimesh:
+    """Create a simple flat roof slab."""
+
+    resolved_height = max(
+        roof_height * 0.18,
+        0.12,
+    )
+
+    roof = trimesh.creation.box(
+        extents=(
+            width * 1.06,
+            depth * 1.06,
+            resolved_height,
+        ),
+    )
+
+    roof.visual.face_colors = color
+
+    roof.apply_translation(
+        (
+            0.0,
+            0.0,
+            base_z + resolved_height / 2,
         )
     )
 
@@ -351,6 +415,52 @@ def build_building_from_blueprint(
                 node_name=f"LoadingDoorLine{panel_index}",
             )
 
+        # Add porches to residential building styles
+    if blueprint.building_style in {
+        "house",
+        "cabin",
+        "farmhouse",
+        "farm house",
+        "hut",
+    }:
+        is_farmhouse = blueprint.building_style in {
+            "farmhouse",
+            "farm house",
+        }
+
+        porch_parts = create_porch(
+            building_width=width,
+            building_depth=depth,
+            porch_width_ratio=(
+                0.92
+                if is_farmhouse
+                else 0.68
+            ),
+            porch_depth=(
+                1.35
+                if is_farmhouse
+                else 1.15
+            ),
+            floor_height=0.16,
+            post_height=min(
+                floor_height * 0.78,
+                2.1,
+            ),
+            post_thickness=0.12,
+            post_count=(
+                4
+                if is_farmhouse
+                else 2
+            ),
+            color=colors["door"],
+        )
+
+        for porch_name, porch_mesh in porch_parts:
+            scene.add_geometry(
+                porch_mesh,
+                node_name=porch_name,
+            )
+
     # Decorative windows on the front.
     # These do not cut real holes yet.
     window_count = max(
@@ -407,6 +517,8 @@ def build_building_from_blueprint(
     # Roof
         roof_base_z = total_wall_height
 
+
+
     if blueprint.roof_style in {
         "flat",
         "slab",
@@ -431,6 +543,15 @@ def build_building_from_blueprint(
             color=colors["roof"],
         )
 
+    elif blueprint.roof_style == "hip":
+        roof = create_hip_roof(
+            width=width * 1.18,
+            depth=depth * 1.18,
+            roof_height=blueprint.roof_height * 1.15,
+            base_z=roof_base_z,
+            color=colors["roof"],
+    )
+
     else:
         roof = create_gable_roof(
             width=width * 1.08,
@@ -444,36 +565,6 @@ def build_building_from_blueprint(
         roof,
         node_name="Roof_Removable",
     )
-
-    # Optional chimney
-    if blueprint.has_chimney:
-        chimney_height = (
-            blueprint.roof_height
-            + floor_height * 0.38
-        )
-
-        chimney = trimesh.creation.box(
-            extents=(
-                width * 0.12,
-                depth * 0.12,
-                chimney_height,
-            ),
-        )
-
-        chimney.visual.face_colors = colors["chimney"]
-
-        chimney.apply_translation(
-            (
-                width * 0.25,
-                0.0,
-                roof_base_z + chimney_height * 0.55,
-            )
-        )
-
-        scene.add_geometry(
-            chimney,
-            node_name="Chimney",
-        )
 
     # Optional balcony
     if blueprint.has_balcony:

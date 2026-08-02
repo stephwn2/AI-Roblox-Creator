@@ -9,6 +9,18 @@ from generators.blueprints import (
     asset_request_to_weapon_blueprint,
 )
 from generators.building_generator import create_building
+from generators.fence_generator import create_fence
+from generators.lot_generator import create_house_lot
+from generators.neighborhood_generator import create_neighborhood
+from generators.street_generator import create_street
+from generators.bush_generator import create_bush
+from generators.rock_generator import create_rock
+from generators.streetlight_generator import create_streetlight
+from generators.bridge_generator import create_bridge
+from generators.river_generator import create_river
+from generators.hill_generator import create_hill
+from generators.parkinglot_generator import create_parking_lot
+
 
 def create_sword_scene(asset):
     """Convert a sword request into a blueprint and build it."""
@@ -67,6 +79,74 @@ def create_object_scene(asset):
             ),
         )
 
+    if asset.object_type == "bush":
+        return create_bush(
+            scale=asset.scale,
+            condition=asset.condition,
+        )
+
+    if asset.object_type == "rock":
+        return create_rock(
+            scale=asset.scale,
+            condition=asset.condition,
+        )
+    
+    if asset.object_type == "hill":
+        return create_hill(
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "river":
+        return create_river(
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "streetlight":
+        return create_streetlight(
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "bridge":
+        return create_bridge(
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "street":
+        return create_street(
+            lots_per_side=4,
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "neighborhood":
+        return create_neighborhood(
+            lot_count=4,
+            scale=asset.scale,
+        )
+
+    if asset.object_type == "lot":
+        return create_house_lot(
+            scale=asset.scale,
+            building_style=getattr(
+                asset,
+                "building_style",
+                "house",
+            ),
+            building_material=asset.material,
+            condition=asset.condition,
+            size=getattr(
+                asset,
+                "size",
+                "normal",
+            ),
+            fence_material=asset.material,
+            tree_count=2,
+        )
+
+    if asset.object_type == "parking_lot":
+        return create_parking_lot(
+            scale=asset.scale,
+        )
+
     if asset.object_type == "building":
         return create_building(
             scale=asset.scale,
@@ -85,7 +165,7 @@ def create_object_scene(asset):
             roof_style=getattr(
                 asset,
                 "roof_style",
-                "gable",
+                "automatic",
             ),
             floor_count=getattr(
                 asset,
@@ -117,6 +197,12 @@ def create_object_scene(asset):
                 "has_tower",
                 False,
             ),
+        )
+
+    if asset.object_type == "fence":
+        return create_fence(
+            scale=asset.scale,
+            material=asset.material,
         )
 
     if asset.object_type == "cube":

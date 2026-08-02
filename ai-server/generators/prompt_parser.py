@@ -270,14 +270,66 @@ def detect_object_type(text: str) -> str | None:
     if any(word in text_lower for word in shield_words):
         return "shield"
 
+    if (
+            contains_word(text, "streetlight")
+            or contains_word(text, "streetlights")
+            or "street light" in text.lower()
+            or "street lights" in text.lower()
+            or contains_word(text, "lamppost")
+            or contains_word(text, "lampposts")
+        ):
+            return "streetlight"
+
+    if (
+            contains_word(text, "street")
+            or contains_word(text, "streets")
+            or contains_word(text, "road")
+            or contains_word(text, "roads")
+        ):
+            return "street"
+
     if any(word in text_lower for word in tree_words):
         return "tree"
 
+    
     if any(word in text_lower for word in cube_words):
         return "cube"
 
     if any(word in text_lower for word in sphere_words):
         return "sphere"
+    
+    if (
+        contains_word(text, "neighborhood")
+        or contains_word(text, "neighbourhood")
+        or contains_word(text, "street")
+        or contains_word(text, "subdivision")
+    ):
+        return "neighborhood"
+
+    if (
+        contains_word(text, "parking")
+        or "parking lot" in text.lower()
+        or "parking lots" in text.lower()
+    ):
+        return "parking_lot"
+        
+        
+    if (
+    contains_word(text, "lot")
+    or contains_word(text, "yard")
+    or "house with yard" in text.lower()
+    or "cabin with yard" in text.lower()
+    or "house lot" in text.lower()
+):
+        return "lot"
+
+    if (
+        contains_word(text, "parking")
+        or "parking lot" in text.lower()
+        or "parking lots" in text.lower()
+    ):
+        return "parking_lot"
+    
     if (
         contains_word(text, "building")
         or contains_word(text, "buildings")
@@ -309,6 +361,52 @@ def detect_object_type(text: str) -> str | None:
         ):
         
         return "building"
+
+    if (
+            contains_word(text, "fence")
+            or contains_word(text, "fences")
+        ):
+                return "fence"
+
+    if (
+    contains_word(text, "bush")
+    or contains_word(text, "bushes")
+    or contains_word(text, "shrub")
+    or contains_word(text, "shrubs")
+):
+        return "bush"
+
+    if (
+        contains_word(text, "rock")
+        or contains_word(text, "rocks")
+        or contains_word(text, "boulder")
+        or contains_word(text, "stone")
+    ):
+        return "rock"
+
+    if (
+            contains_word(text, "hill")
+            or contains_word(text, "hills")
+            or contains_word(text, "mound")
+        ):
+            return "hill"
+
+    if (
+        contains_word(text, "bridge")
+        or contains_word(text, "bridges")
+        or contains_word(text, "overpass")
+    ):
+        return "bridge"
+
+    if (
+        contains_word(text, "river")
+        or contains_word(text, "rivers")
+        or contains_word(text, "stream")
+        or contains_word(text, "creek")
+    ):
+        return "river"
+
+    
 
     return None
 
@@ -607,7 +705,7 @@ def parse_prompt(prompt: str) -> list[AssetRequest]:
     if not asset_requests:
         raise ValueError(
             "Genesis did not recognize any supported objects. "
-            "Try sword, axe, shield, tree, building, cube, or sphere."
+            "Try sword, axe, shield, tree, bush, rock, building, lot, street, neighborhood, fence, cube, or sphere."
         )
 
     return asset_requests
